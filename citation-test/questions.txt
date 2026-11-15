@@ -1,0 +1,47 @@
+# One question per line. Mix: health, science, news, money and consumer, history and facts, how-to.
+# health
+Is it safe to eat raw cookie dough?
+Does vitamin C prevent colds?
+How much caffeine is safe to drink in a day?
+Do blue light glasses help with eye strain?
+Is intermittent fasting better than regular dieting for weight loss?
+Can you get the flu from the flu vaccine?
+How much water should an adult drink each day?
+Does cracking your knuckles cause arthritis?
+Are artificial sweeteners linked to cancer?
+How many hours of sleep do teenagers need?
+# science and environment
+How much of the Earth's oxygen comes from the ocean?
+Is nuclear power safer than coal per unit of energy?
+How long does a plastic bottle take to break down?
+Do electric cars produce fewer emissions than gas cars over their lifetime?
+Why is the sky blue?
+How fast is sea level rising?
+Can goldfish really only remember things for three seconds?
+# news and current events
+What happened at the most recent UN climate summit?
+What did the EU AI Act require starting in August 2026?
+Who won the most recent FIFA World Cup?
+What is the current US federal minimum wage?
+What is the current inflation rate in the United States?
+What is the population of Tokyo?
+What caused the 2025 Los Angeles wildfires?
+# money and consumer
+Is it better to pay off debt or invest?
+How does a credit score get calculated?
+Are extended warranties worth it?
+What is the difference between a Roth IRA and a traditional IRA?
+Do phone chargers left plugged in use electricity?
+# history and facts
+Did Napoleon Bonaparte have a short stature?
+Did Vikings wear horned helmets?
+Was the Great Wall of China visible from space?
+When was the printing press invented?
+Did Albert Einstein fail math in school?
+How many people died in the sinking of the Titanic?
+# how-to and everyday
+How do I remove a red wine stain from carpet?
+Is it safe to charge my phone overnight?
+How long should I boil an egg for a soft yolk?
+Can I use my phone on a plane in airplane mode?
+How do I tell if an image was made with AI?

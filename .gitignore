@@ -1,0 +1,18 @@
+# local environments and caches
+.venv/
+__pycache__/
+.DS_Store
+.netlify/
+# saved browser logins and personal contact details: never commit
+.gemini-profile/
+.ai-profile/
+image-test/collect/contact.txt
+# test images (other people's copyrights) and fetched web pages
+image-test/images/
+citation-test/data/sources/
+citation-test/data/label_sample.json
+image-test/results/gemini.json
+image-test/results/gemini_errors/
+image-test/results/detectors.json
+# converted model files (hosted on Hugging Face instead)
+*.onnx

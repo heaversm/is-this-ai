@@ -1,0 +1,8 @@
+torch
+torchvision
+timm
+transformers
+huggingface_hub
+pillow
+c2pa-python
+playwright

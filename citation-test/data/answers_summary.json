@@ -1,0 +1,182 @@
+[
+ {
+  "tool": "perplexity",
+  "qid": "01",
+  "claims": 3,
+  "uncited_sentences": 10
+ },
+ {
+  "tool": "perplexity",
+  "qid": "02",
+  "claims": 3,
+  "uncited_sentences": 8
+ },
+ {
+  "tool": "perplexity",
+  "qid": "03",
+  "claims": 4,
+  "uncited_sentences": 7
+ },
+ {
+  "tool": "perplexity",
+  "qid": "04",
+  "claims": 4,
+  "uncited_sentences": 7
+ },
+ {
+  "tool": "perplexity",
+  "qid": "05",
+  "claims": 4,
+  "uncited_sentences": 10
+ },
+ {
+  "tool": "perplexity",
+  "qid": "06",
+  "claims": 3,
+  "uncited_sentences": 4
+ },
+ {
+  "tool": "perplexity",
+  "qid": "07",
+  "claims": 6,
+  "uncited_sentences": 4
+ },
+ {
+  "tool": "perplexity",
+  "qid": "08",
+  "claims": 2,
+  "uncited_sentences": 4
+ },
+ {
+  "tool": "perplexity",
+  "qid": "09",
+  "claims": 4,
+  "uncited_sentences": 10
+ },
+ {
+  "tool": "perplexity",
+  "qid": "10",
+  "claims": 3,
+  "uncited_sentences": 5
+ },
+ {
+  "tool": "perplexity",
+  "qid": "11",
+  "claims": 3,
+  "uncited_sentences": 3
+ },
+ {
+  "tool": "perplexity",
+  "qid": "12",
+  "claims": 5,
+  "uncited_sentences": 7
+ },
+ {
+  "tool": "perplexity",
+  "qid": "13",
+  "claims": 1,
+  "uncited_sentences": 4
+ },
+ {
+  "tool": "perplexity",
+  "qid": "14",
+  "claims": 6,
+  "uncited_sentences": 13
+ },
+ {
+  "tool": "perplexity",
+  "qid": "15",
+  "claims": 3,
+  "uncited_sentences": 5
+ },
+ {
+  "tool": "perplexity",
+  "qid": "16",
+  "claims": 1,
+  "uncited_sentences": 12
+ },
+ {
+  "tool": "perplexity",
+  "qid": "17",
+  "claims": 3,
+  "uncited_sentences": 0
+ },
+ {
+  "tool": "perplexity",
+  "qid": "18",
+  "claims": 3,
+  "uncited_sentences": 14
+ },
+ {
+  "tool": "perplexity",
+  "qid": "19",
+  "claims": 7,
+  "uncited_sentences": 4
+ },
+ {
+  "tool": "perplexity",
+  "qid": "20",
+  "claims": 1,
+  "uncited_sentences": 0
+ },
+ {
+  "tool": "perplexity",
+  "qid": "21",
+  "claims": 1,
+  "uncited_sentences": 1
+ },
+ {
+  "tool": "perplexity",
+  "qid": "23",
+  "claims": 1,
+  "uncited_sentences": 0
+ },
+ {
+  "tool": "perplexity",
+  "qid": "24",
+  "claims": 6,
+  "uncited_sentences": 13
+ },
+ {
+  "tool": "perplexity",
+  "qid": "25",
+  "claims": 3,
+  "uncited_sentences": 13
+ },
+ {
+  "tool": "perplexity",
+  "qid": "26",
+  "claims": 1,
+  "uncited_sentences": 1
+ },
+ {
+  "tool": "perplexity",
+  "qid": "27",
+  "claims": 1,
+  "uncited_sentences": 2
+ },
+ {
+  "tool": "perplexity",
+  "qid": "28",
+  "claims": 1,
+  "uncited_sentences": 2
+ },
+ {
+  "tool": "perplexity",
+  "qid": "30",
+  "claims": 1,
+  "uncited_sentences": 0
+ },
+ {
+  "tool": "perplexity",
+  "qid": "35",
+  "claims": 1,
+  "uncited_sentences": 0
+ },
+ {
+  "tool": "perplexity",
+  "qid": "38",
+  "claims": 1,
+  "uncited_sentences": 0
+ }
+]

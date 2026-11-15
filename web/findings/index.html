@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Can we tell people what's real? — Is this image AI?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600;6..72,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f6f3ec;
+    --paper-2: #ece7dc;
+    --ink: #151412;
+    --ink-2: #4d4a44;
+    --ink-3: #7b776e;
+    --rule: #d8d2c4;
+    --caught: #2a78d6;      /* categorical slot 1, validated */
+    --missed: #eb6834;      /* categorical slot 2, validated */
+    --unknown: #b9b3a5;     /* neutral: "don't know" */
+    --serif: "Newsreader", Georgia, serif;
+    --sans: "Public Sans", "Helvetica Neue", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; padding: 0 32px; overflow-x: hidden; background: var(--paper); color: var(--ink); font: 400 17px/1.55 var(--sans); -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration-color: var(--ink-3); text-underline-offset: 3px; }
+  a:hover { text-decoration-color: var(--ink); }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--caught); outline-offset: 3px; border-radius: 2px; }
+  .wrap { max-width: 1120px; margin: 0 auto; }
+  .narrow { max-width: 720px; }
+
+  /* masthead */
+  .mast { border-bottom: 1px solid var(--ink); padding: 18px 0 12px; display: flex; justify-content: space-between; font: 500 12px/1 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); }
+
+  /* hero */
+  .hero { padding: 72px 0 56px; display: grid; grid-template-columns: 1.25fr 1fr; gap: 56px; align-items: end; border-bottom: 1px solid var(--rule); }
+  .kicker { font: 600 13px/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--missed); margin: 0 0 18px; }
+  h1 { font: 600 clamp(44px, 6vw, 76px)/1.0 var(--serif); letter-spacing: -.02em; margin: 0 0 24px; }
+  .dek { font: 400 21px/1.45 var(--serif); color: var(--ink-2); margin: 0; max-width: 34ch; }
+  .verdict { border-top: 3px solid var(--ink); padding-top: 18px; }
+  .verdict .big { font: 700 clamp(72px, 10vw, 128px)/.9 var(--serif); letter-spacing: -.03em; }
+  .verdict .big span { color: var(--ink-3); font-weight: 400; }
+  .verdict p { margin: 12px 0 0; font-size: 16px; color: var(--ink-2); max-width: 32ch; }
+  .verdict strong { color: var(--ink); }
+
+  section { padding: 72px 0; border-bottom: 1px solid var(--rule); }
+  .label { font: 600 12px/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 14px; }
+  h2 { font: 600 clamp(30px, 3.6vw, 44px)/1.08 var(--serif); letter-spacing: -.01em; margin: 0 0 20px; max-width: 22ch; }
+  h3 { font: 600 22px/1.2 var(--serif); margin: 0 0 8px; }
+  p.lede { font: 400 20px/1.5 var(--serif); color: var(--ink-2); margin: 0 0 32px; max-width: 46ch; }
+  .muted { color: var(--ink-3); }
+  .mono { font-family: var(--mono); font-size: 13px; }
+
+  /* problem */
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+  .fact { border-left: 3px solid var(--ink); padding: 2px 0 2px 18px; margin: 0 0 22px; }
+  .fact b { display: block; font: 700 34px/1.05 var(--serif); margin-bottom: 4px; }
+  .fact span { color: var(--ink-2); font-size: 15px; }
+  .fact cite { display: block; font: 400 12px/1.4 var(--sans); color: var(--ink-3); font-style: normal; margin-top: 4px; }
+
+  /* approach */
+  .checks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border-top: 1px solid var(--ink); margin: 8px 0 48px; }
+  .check { padding: 22px 22px 6px 0; border-right: 1px solid var(--rule); }
+  .check + .check { padding-left: 22px; }
+  .check:last-child { border-right: 0; }
+  .check .n { font: 500 13px/1 var(--mono); color: var(--ink-3); }
+  .check p { margin: 6px 0 14px; color: var(--ink-2); font-size: 15px; }
+  .tag { display: inline-block; font: 600 11px/1 var(--sans); letter-spacing: .08em; text-transform: uppercase; padding: 5px 7px; border: 1px solid var(--ink-3); border-radius: 2px; color: var(--ink-2); margin-right: 6px; }
+
+  .sources { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; background: var(--rule); border: 1px solid var(--rule); margin-bottom: 48px; }
+  .src { background: var(--paper); padding: 18px; }
+  .src .num { font: 700 40px/1 var(--serif); }
+  .src .what { font-weight: 600; margin: 6px 0 4px; }
+  .src .how { font-size: 14px; color: var(--ink-2); }
+
+  figure { margin: 0; }
+  figcaption { font-size: 14px; color: var(--ink-2); margin-top: 10px; max-width: 70ch; }
+  figcaption b { color: var(--ink); }
+  .shot { border: 1px solid var(--ink); background: #fff; box-shadow: 8px 8px 0 var(--paper-2); }
+  .shot img { display: block; width: 100%; height: auto; }
+  .shot-row { display: grid; grid-template-columns: 1.5fr 1fr; gap: 40px; align-items: center; }
+
+  /* strip */
+  .strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-top: 8px; }
+  .frame { position: relative; }
+  .frame img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border: 1px solid var(--ink); background: #000; }
+  .frame .step { font: 600 12px/1 var(--sans); letter-spacing: .1em; text-transform: uppercase; margin: 12px 0 8px; }
+  .row { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; padding: 7px 0; border-top: 1px solid var(--rule); }
+  .row .k { color: var(--ink-3); }
+  .ok { color: var(--caught); font-weight: 600; }
+  .bad { color: #c04d1f; font-weight: 600; }
+  .arrow { position: absolute; right: -16px; top: calc(50% - 60px); font: 400 22px/1 var(--serif); color: var(--ink-3); }
+
+  /* chart */
+  .chart { margin: 8px 0 12px; }
+  .legend { display: flex; gap: 22px; font-size: 14px; color: var(--ink-2); margin-bottom: 18px; flex-wrap: wrap; }
+  .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 2px; margin-right: 7px; vertical-align: -1px; }
+  .bar-row { display: grid; grid-template-columns: 210px 1fr; gap: 20px; align-items: center; margin-bottom: 16px; }
+  .bar-row .name { font-weight: 600; font-size: 15px; }
+  .bar-row .name small { display: block; font-weight: 400; color: var(--ink-3); font-size: 13px; }
+  .bar { display: flex; gap: 2px; height: 40px; }
+  .seg { position: relative; display: flex; align-items: center; padding: 0 10px; color: #fff; font: 600 14px/1 var(--sans); white-space: nowrap; overflow: visible; width: 0; transition: width 1s cubic-bezier(.2,.7,.2,1); cursor: default; }
+  .seg:first-child { border-radius: 4px 0 0 4px; }
+  .seg:last-child { border-radius: 0 4px 4px 0; }
+  .seg.c { background: var(--caught); }
+  .seg.m { background: var(--missed); }
+  .seg.u { background: var(--unknown); color: var(--ink); }
+  .seg .tip { position: absolute; bottom: calc(100% + 8px); left: 0; background: var(--ink); color: var(--paper); font: 400 13px/1.35 var(--sans); padding: 8px 10px; border-radius: 3px; white-space: normal; width: 230px; opacity: 0; transform: translateY(4px); transition: .15s; pointer-events: none; z-index: 5; }
+  .seg:hover .tip, .seg:focus .tip { opacity: 1; transform: none; }
+  .highlight .name { color: #c04d1f; }
+
+  .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; border-top: 1px solid var(--ink); margin-top: 48px; }
+  .stat { padding: 22px 24px 0 0; }
+  .stat + .stat { padding-left: 24px; border-left: 1px solid var(--rule); }
+  .stat .v { font: 700 56px/1 var(--serif); letter-spacing: -.02em; }
+  .stat .v small { font-size: 24px; color: var(--ink-3); font-weight: 400; }
+  .stat .meter { height: 6px; background: var(--paper-2); margin: 14px 0 10px; position: relative; border-radius: 3px; }
+  .stat .meter b { position: absolute; inset: 0 auto 0 0; border-radius: 3px; width: 0; transition: width 1s .2s cubic-bezier(.2,.7,.2,1); }
+  .stat .meter::after { content: ""; position: absolute; left: 80%; top: -5px; bottom: -5px; width: 2px; background: var(--ink); }
+  .stat .meter-key { font: 400 11px/1 var(--sans); color: var(--ink-3); text-align: right; width: 80%; margin-top: -4px; margin-bottom: 8px; }
+  .stat p { margin: 0; font-size: 15px; color: var(--ink-2); }
+
+  /* gallery */
+  .gallery { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; margin-top: 12px; }
+  .card { position: relative; display: block; text-decoration: none; }
+  .card img { width: 100%; aspect-ratio: 3/4; object-fit: cover; display: block; border: 1px solid var(--ink); filter: saturate(.9); transition: filter .2s; }
+  .card:hover img { filter: saturate(1.05); }
+  .stamp { position: absolute; top: 10px; left: -6px; background: var(--missed); color: #fff; font: 700 11px/1 var(--sans); letter-spacing: .08em; text-transform: uppercase; padding: 6px 8px; transform: rotate(-3deg); box-shadow: 2px 2px 0 rgba(0,0,0,.15); }
+  .stamp.c { background: var(--caught); }
+  .card .meta { font-size: 13px; color: var(--ink-2); margin-top: 8px; line-height: 1.35; }
+  .card .meta b { color: var(--ink); display: block; font-size: 14px; }
+  .gallery.caught { grid-template-columns: repeat(3, 1fr); max-width: 560px; }
+
+  /* watermark callout */
+  .callout { display: grid; grid-template-columns: auto 1fr; gap: 36px; align-items: center; background: var(--ink); color: var(--paper); padding: 40px 44px; margin-top: 56px; }
+  .callout .big { font: 700 96px/1 var(--serif); }
+  .callout .big small { font-size: 36px; color: #a9a49a; font-weight: 400; }
+  .callout h3 { color: var(--paper); font-size: 26px; }
+  .callout p { margin: 0; color: #d6d1c6; }
+
+  /* display mock */
+  .levels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-top: 12px; }
+  .level img { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; border: 1px solid var(--ink); }
+  .pill { display: inline-flex; align-items: center; gap: 8px; font: 600 14px/1 var(--sans); padding: 9px 12px; border-radius: 999px; margin: 14px 0 8px; }
+  .pill.conf { background: var(--ink); color: var(--paper); }
+  .pill.like { background: #dbe8f8; color: #174a87; }
+  .pill.dunno { background: var(--paper-2); color: var(--ink-2); border: 1px dashed var(--ink-3); }
+  .level p { margin: 0; font-size: 15px; color: var(--ink-2); }
+
+  .means { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; margin-top: 56px; }
+  .means ul { margin: 0; padding-left: 20px; color: var(--ink-2); }
+  .means li { margin-bottom: 10px; }
+  .means li b { color: var(--ink); }
+
+  footer { padding: 40px 0 72px; font-size: 14px; color: var(--ink-2); }
+  footer .links { display: flex; gap: 28px; flex-wrap: wrap; margin-bottom: 14px; }
+
+
+  /* side-by-side scorecard */
+  .score { margin-top: 12px; border-top: 1px solid var(--ink); }
+  .score-head, .score-row { display: grid; grid-template-columns: 1.35fr 1fr 1fr 1fr; gap: 28px; }
+  .score-head { padding: 14px 0 10px; font: 600 12px/1.2 var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); border-bottom: 1px solid var(--rule); }
+  .score-head .hl { color: #c04d1f; }
+  .score-head .sub { letter-spacing: 0; text-transform: none; font-weight: 400; }
+  .score-row { padding: 22px 0; border-bottom: 1px solid var(--rule); align-items: start; }
+  .score-row h3 { font-size: 20px; margin: 0 0 4px; }
+  .score-row .who { font-size: 13px; color: var(--ink-3); margin: 0 0 8px; }
+  .score-row .desc { font-size: 14px; color: var(--ink-2); margin: 0 0 10px; }
+  .score-row .tags .tag { margin-bottom: 4px; }
+  .group-label { display: none; font: 600 11px/1 var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 8px; }
+  .mini { display: flex; gap: 2px; height: 14px; margin: 4px 0 8px; }
+  .mini i { display: block; height: 100%; }
+  .mini i:first-child { border-radius: 3px 0 0 3px; }
+  .mini i:last-child { border-radius: 0 3px 3px 0; }
+  .mini .c { background: var(--caught); } .mini .m { background: var(--missed); } .mini .u { background: var(--unknown); }
+  .mini .x { background: repeating-linear-gradient(45deg, var(--paper-2) 0 4px, var(--rule) 4px 6px); }
+  .cell-line { font-size: 13px; color: var(--ink-2); line-height: 1.45; }
+  .cell-line b { color: var(--ink); }
+  .verdict-chip { display: inline-block; margin-top: 6px; font: 600 12px/1 var(--sans); padding: 5px 7px; border-radius: 2px; }
+  .verdict-chip.pass { background: #dbe8f8; color: #174a87; }
+  .verdict-chip.fail { background: #fbe1d5; color: #9c3a12; }
+  .verdict-chip.na { background: var(--paper-2); color: var(--ink-2); }
+  .accuse { color: #9c3a12; font-weight: 600; }
+  .ours { display: inline-block; background: var(--ink); color: var(--paper); padding: 3px 6px; border-radius: 2px; margin-right: 8px; letter-spacing: .1em; }
+  .more-detectors summary { cursor: pointer; padding: 18px 0; font: 600 15px/1 var(--sans); color: var(--ink); border-bottom: 1px solid var(--rule); list-style: none; }
+  .more-detectors summary::-webkit-details-marker { display: none; }
+  .more-detectors summary::before { content: "+"; display: inline-block; width: 22px; font: 400 20px/1 var(--sans); color: var(--ink-3); }
+  .more-detectors[open] summary::before { content: "–"; }
+  .more-detectors[open] summary { color: var(--ink-2); }
+  .more-detectors summary:hover { color: #174a87; }
+  .sort { border-top: 1px solid var(--ink); }
+  .sort-row { display: grid; grid-template-columns: 1.2fr 1fr 1.3fr 1.3fr; gap: 20px; padding: 14px 0; border-bottom: 1px solid var(--rule); align-items: baseline; }
+  .sort-row b { font: 700 28px/1 var(--serif); display: block; }
+  .sort-row span:first-child b { font: 600 16px/1.2 var(--sans); }
+  .sort-row small { display: block; font-size: 13px; color: var(--ink-2); margin-top: 4px; }
+  .sort-row em { font-style: normal; color: #9c3a12; font-weight: 600; }
+  .sort-head { font: 600 12px/1 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+  .sort-row.hl span:first-child b { color: #c04d1f; }
+  .pointless { margin-top: 56px; background: var(--paper-2); padding: 32px 36px; }
+  .pointless h3 { font-size: 26px; }
+  .pointless p { color: var(--ink-2); max-width: 75ch; margin: 0 0 20px; }
+  .pointless h4 { font: 600 14px/1.2 var(--sans); margin: 0 0 8px; }
+  .pointless ul { margin: 0; padding-left: 18px; color: var(--ink-2); font-size: 15px; }
+  .pointless li { margin-bottom: 8px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
+  @media (max-width: 860px) { .sort-row { grid-template-columns: 1fr 1fr; } .sort-head { display: none; } .two-col { grid-template-columns: 1fr; } .pointless { padding: 24px 20px; } }
+  .score-note { font-size: 13px; color: var(--ink-3); margin-top: 14px; max-width: 80ch; }
+  @media (max-width: 860px) {
+    .score-head { display: none; }
+    .score-row { grid-template-columns: 1fr; gap: 14px; }
+    .group-label { display: block; }
+  }
+
+  /* reveal */
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; transition: none; }
+    .seg, .stat .meter b { transition: none; }
+  }
+  @media (max-width: 860px) {
+    body { padding: 0 20px; }
+    .hero, .two, .shot-row, .means { grid-template-columns: 1fr; }
+    .checks, .stats { grid-template-columns: 1fr; }
+    .sources { grid-template-columns: 1fr 1fr; }
+    .check, .check + .check, .stat, .stat + .stat { padding: 18px 0; border-left: 0; border-right: 0; border-bottom: 1px solid var(--rule); }
+    .stat .v { font-size: 44px; }
+    .callout { padding: 28px 24px; }
+    .callout .big { font-size: 72px; }
+    .seg .tip { width: 180px; }
+    .strip { grid-template-columns: 1fr 1fr; }
+    .gallery { grid-template-columns: repeat(3, 1fr); }
+    .levels { grid-template-columns: 1fr; }
+    .bar-row { grid-template-columns: 1fr; gap: 6px; }
+    .arrow { display: none; }
+    .callout { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<header class="wrap mast"><span>Mike Heavers</span><span>Research findings · Nov 2026 · <a href="/">Try the tool</a></span></header>
+
+<main>
+  <div class="wrap hero">
+    <div class="reveal">
+      <p class="kicker">Research findings · Images, then AI answers</p>
+      <h1>Can we tell people what's real?</h1>
+      <p class="dek">The idea being tested: a display over any image that says whether it was made by AI, and admits when it doesn't know.</p>
+    </div>
+    <div class="verdict reveal">
+      <div class="big">9<span>/59</span></div>
+      <p><strong>Viral AI fakes caught in our test</strong> by SwinV2, the free detector that did best overall. It called 39 of the other 50 "real."</p>
+    </div>
+  </div>
+
+  <!-- PROBLEM -->
+  <section class="wrap">
+    <div class="two">
+      <div class="reveal">
+        <p class="label">The problem</p>
+        <h2>People don't know what's real or AI anymore.</h2>
+        <p class="lede">We built a checker for the question people now ask about every image (is this AI?) and ran it on 363 images, including 123 that went viral and were fact-checked.</p>
+      </div>
+      <div class="reveal">
+        <p class="label" style="margin-bottom:18px">From other research</p>
+        <div class="fact"><b>Over 60%</b><span>of AI search answers on news questions were wrong</span><cite><a href="https://www.cjr.org/tow_center/we-compared-eight-ai-search-engines-theyre-all-bad-at-citing-news.php">CJR Tow Center</a>, 1,600 tests, Mar 2025</cite></div>
+        <div class="fact"><b>0 of 8</b><span>apps kept a video's signed "made with AI" label after upload</span><cite><a href="https://www.washingtonpost.com/technology/2025/10/22/ai-deepfake-sora-platforms-c2pa/">Washington Post test</a>, Oct 2025</cite></div>
+        <div class="fact"><b>"Incoherent"</b><span>is how Meta's own Oversight Board described its AI labels</span><cite><a href="https://www.oversightboard.com/decision/fb-92ioq88s/">Oversight Board decisions</a>, 2025–2026</cite></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- APPROACH -->
+  <section class="wrap">
+    <div class="reveal">
+      <p class="label"><span class="ours">Our test</span> How we tested it</p>
+      <h2>Three kinds of check, run on images with known answers.</h2>
+    </div>
+    <div class="checks reveal">
+      <div class="check"><span class="n">01</span><h3>Labels in the file</h3><p>Signed <a href="https://contentcredentials.org">"Content Credentials"</a>, the label format of <a href="https://c2pa.org">C2PA</a>, an industry standard backed by Adobe, Google, OpenAI and others. Also the <a href="https://cv.iptc.org/newscodes/digitalsourcetype/">IPTC</a> "made by AI" tag, a standard photo-metadata field, and settings that AI tools save into images.</p><span class="tag">Certain</span><span class="tag">Local · free</span></div>
+      <div class="check"><span class="n">02</span><h3>Detectors that guess</h3><p>Four free AI models that look at the pixels and estimate how likely an image is to be AI, including <a href="https://arxiv.org/abs/2411.04125">Community Forensics</a>, a research model trained on thousands of generators and presented at <a href="https://cvpr.thecvf.com">CVPR 2025</a>, the main computer-vision research conference.</p><span class="tag">A guess</span><span class="tag">Local · free</span></div>
+      <div class="check"><span class="n">03</span><h3>Google's hidden watermark</h3><p><a href="https://deepmind.google/technologies/synthid/">SynthID</a>, Google's invisible watermark, hidden in the pixels of images from Google's AI tools. There's no public API, so a script uploads each image to <a href="https://gemini.google.com">Gemini</a>, Google's AI assistant, and asks it to check.</p><span class="tag">Certain</span><span class="tag">Google's servers</span></div>
+    </div>
+
+    <div class="reveal">
+      <p class="label">The 363 images</p>
+    </div>
+    <div class="sources reveal">
+      <div class="src"><div class="num">60</div><div class="what">AI originals</div><div class="how">Files from 17 tools (ChatGPT, Gemini, Midjourney, Flux, Firefly, Grok…) via <a href="https://commons.wikimedia.org">Wikimedia Commons</a>, which keeps uploads untouched</div></div>
+      <div class="src"><div class="num">60</div><div class="what">Real originals</div><div class="how">Random camera photos from Commons, taken 2000–2020, before AI images were hard to spot</div></div>
+      <div class="src"><div class="num">120</div><div class="what">Re-shared copies</div><div class="how">Each original passed through a simulated Instagram upload, WhatsApp send, or phone screenshot</div></div>
+      <div class="src"><div class="num">123</div><div class="what">Viral, fact-checked</div><div class="how">59 AI fakes and 64 real photos ruled on by Lead Stories, Snopes, PolitiFact, Full Fact and others, saved as they circulated</div></div>
+    </div>
+
+    <div class="shot-row reveal">
+      <figure class="shot"><img src="assets/gemini-check.png" alt="Gemini web app: the script uploaded an image and asked Gemini to run its SynthID watermark check. Gemini replied SYNTHID_NOT_FOUND."></figure>
+      <div>
+        <h3>The watermark check, running in Gemini</h3>
+        <p class="muted" style="margin:0">The script uploads each image, asks a fixed question, and reads the one-word answer. This image was made with ChatGPT, not a Google tool, so "no Google watermark" is the right answer.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESHARE STRIP -->
+  <section class="wrap">
+    <div class="reveal">
+      <p class="label"><span class="ours">Our test</span> What sharing does</p>
+      <h2>One image, put through three simulated shares. The label vanishes, and the guess can flip.</h2>
+      <p class="lede">An Adobe Firefly portrait starts with a valid signed label saying it's AI. Our script then made the copies an Instagram upload, a WhatsApp send and a phone screenshot would produce. We didn't send anything through the real apps, and the resize and compression settings are our estimates of what each app does, not measurements. The viral images show what real sharing does. After one simulated share only the detector is left, and the WhatsApp-style copy turned its answer around.</p>
+    </div>
+    <div class="strip reveal">
+      <div class="frame"><img src="assets/strip-original.jpg" alt="Adobe Firefly AI portrait, original file"><span class="arrow">→</span>
+        <div class="step">Original file</div>
+        <div class="row"><span class="k">Signed label</span><span class="ok">AI · Adobe Firefly</span></div>
+        <div class="row"><span class="k">Detector</span><span class="ok">99.7% AI</span></div></div>
+      <div class="frame"><img src="assets/strip-social.jpg" alt="Same portrait after a simulated Instagram upload"><span class="arrow">→</span>
+        <div class="step">Instagram-style · simulated</div>
+        <div class="row"><span class="k">Signed label</span><span class="bad">Gone</span></div>
+        <div class="row"><span class="k">Detector</span><span class="ok">99.5% AI</span></div></div>
+      <div class="frame"><img src="assets/strip-chat.jpg" alt="Same portrait after a simulated WhatsApp send"><span class="arrow">→</span>
+        <div class="step">WhatsApp-style · simulated</div>
+        <div class="row"><span class="k">Signed label</span><span class="bad">Gone</span></div>
+        <div class="row"><span class="k">Detector</span><span class="bad">9% AI → "real"</span></div></div>
+      <div class="frame"><img src="assets/strip-screenshot.jpg" alt="Same portrait as a phone screenshot">
+        <div class="step">Phone screenshot · simulated</div>
+        <div class="row"><span class="k">Signed label</span><span class="bad">Gone</span></div>
+        <div class="row"><span class="k">Detector</span><span class="ok">99.9% AI</span></div></div>
+    </div>
+    <p class="muted" style="font-size:14px;margin-top:18px">Across all 243 re-shared and viral images, labels in the file answered <b style="color:var(--ink)">zero</b> times. On the originals they answered 11 times out of 120, and were right every time.</p>
+  </section>
+
+  <!-- FINDINGS -->
+  <section class="wrap" id="findings">
+    <div class="reveal">
+      <p class="label"><span class="ours">Our test</span> What we found</p>
+      <h2>The detector does fine on clean files and fails on the fakes that spread.</h2>
+      <p class="lede">We ran four free detectors on every image: <a href="https://huggingface.co/Ateeqq/ai-vs-human-image-detector">SigLIP</a>, <a href="https://huggingface.co/haywoodsloan/ai-image-detector-deploy">SwinV2</a>, <a href="https://huggingface.co/Organika/sdxl-detector">SDXL</a> and <a href="https://arxiv.org/abs/2411.04125">Community Forensics</a>. This chart shows SwinV2, the one that did best overall, on the <b>AI images</b> in each group, counting only answers where it was at least 95% sure. All four are compared further down.</p>
+    </div>
+    <div class="chart reveal" role="img" aria-label="Stacked bars showing AI images caught, called real, or unanswered, for three image groups">
+      <div class="legend"><span><i style="background:var(--caught)"></i>Caught: said AI</span><span><i style="background:var(--missed)"></i>Missed: said "real"</span><span><i style="background:var(--unknown)"></i>Not sure enough to answer</span></div>
+      <div class="bar-row"><div class="name">Wikimedia originals<small>60 AI images</small></div>
+        <div class="bar" data-total="60"><span class="seg c" data-n="45" tabindex="0">45<span class="tip">Caught 45 of 60 AI originals from Commons.</span></span><span class="seg m" data-n="7" tabindex="0">7<span class="tip">Called 7 AI originals "real."</span></span><span class="seg u" data-n="8" tabindex="0">8<span class="tip">Not 95% sure either way on 8.</span></span></div></div>
+      <div class="bar-row"><div class="name">Simulated re-shares<small>60 AI images</small></div>
+        <div class="bar" data-total="60"><span class="seg c" data-n="44" tabindex="0">44<span class="tip">Caught 44 of 60 re-shared AI copies.</span></span><span class="seg m" data-n="9" tabindex="0">9<span class="tip">Called 9 re-shared AI copies "real."</span></span><span class="seg u" data-n="7" tabindex="0">7<span class="tip">Not 95% sure either way on 7.</span></span></div></div>
+      <div class="bar-row highlight"><div class="name">Viral fakes, fact-checked<small>59 AI images</small></div>
+        <div class="bar" data-total="59"><span class="seg c" data-n="9" tabindex="0">9<span class="tip">Caught only 9 of 59 viral fakes.</span></span><span class="seg m" data-n="39" tabindex="0">39<span class="tip">Called 39 debunked fakes "real", each time at least 95% sure.</span></span><span class="seg u" data-n="11" tabindex="0">11<span class="tip">Not 95% sure either way on 11.</span></span></div></div>
+    </div>
+
+    <div class="stats reveal">
+      <div class="stat"><div class="v">95<small>%</small></div><div class="meter"><b style="background:var(--caught)" data-w="95"></b></div><div class="meter-key">80% bar</div><p><b>When it says "AI," it's right:</b> 98 of 103 times across all images.</p></div>
+      <div class="stat"><div class="v">61<small>%</small></div><div class="meter"><b style="background:var(--missed)" data-w="61"></b></div><div class="meter-key">80% bar</div><p><b>When it says "real" on viral images, it's right:</b> 60 of 99 times. Below the bar.</p></div>
+      <div class="stat"><div class="v">59<small>%</small></div><div class="meter"><b style="background:var(--unknown)" data-w="59"></b></div><div class="meter-key">80% bar</div><p><b>All four free detectors on viral images,</b> forced to answer every time, were right 59% of the time on average: barely better than a coin flip.</p></div>
+    </div>
+    <p class="score-note reveal">The tick on each meter marks 80%, the accuracy we set as the minimum for a display worth showing.</p>
+
+    <div class="reveal" style="margin-top:64px">
+      <h3>Debunked fakes the detector called real</h3>
+      <p class="muted" style="margin:0 0 6px;font-size:15px">Each one was ruled AI-made by a professional fact-checker. Click an image for the fact-check.</p>
+    </div>
+    <div class="gallery reveal">
+      <a class="card" href="https://leadstories.com/hoax-alert/2026/03/ffact-check-fake-selfie-of-seven-dogs-walking-together-in-china-is-not-real-photo.html"><img src="assets/fc_seven-dogs-selfie.jpg" alt="AI image: seven dogs taking a selfie"><span class="stamp">99.8% "real"</span><div class="meta"><b>Seven dogs' selfie</b>Lead Stories, Mar 2026</div></a>
+      <a class="card" href="https://fullfact.org/online/eiffel-tower-hay-bales-artifical-intelligence-image/"><img src="assets/fc_eiffel-tower-hay-bales.jpg" alt="AI image: Eiffel Tower surrounded by hay bales"><span class="stamp">99.4% "real"</span><div class="meta"><b>Eiffel Tower hay bales</b>Full Fact</div></a>
+      <a class="card" href="https://www.snopes.com/fact-check/egyptian-sculptures-cats/"><img src="assets/fc_egyptian-cat-sculpture.jpg" alt="AI image: Egyptian cat sculpture"><span class="stamp">99.5% "real"</span><div class="meta"><b>Egyptian cat sculpture</b>Snopes, which found a SynthID watermark</div></a>
+      <a class="card" href="https://leadstories.com/hoax-alert/2026/07/fact-check-fake-image-shows-blue-angels-flyover-on-florida-beach.html"><img src="assets/fc_blue-angels-beach-flyover.jpg" alt="AI image: Blue Angels flying over a beach"><span class="stamp">99.1% "real"</span><div class="meta"><b>Blue Angels flyover</b>Lead Stories, Jul 2026</div></a>
+      <a class="card" href="https://leadstories.com/hoax-alert/2026/07/fact-check-fake-image-does-not-show-real-tall-ships-sailing-near-liberty-island.html"><img src="assets/fc_tall-ships-liberty-island.jpg" alt="AI image: tall ships near Liberty Island"><span class="stamp">97.3% "real"</span><div class="meta"><b>Tall ships, Liberty Island</b>Lead Stories, Jul 2026</div></a>
+      <a class="card" href="https://leadstories.com/hoax-alert/2026/11/fact-check-image-of-aramco-tower-in-riyadh-does-not-show-real-damage-after-houthi-attack.html"><img src="assets/fc_aramco-tower-riyadh.jpg" alt="AI image: damaged Aramco tower in Riyadh"><span class="stamp">99.9% "real"</span><div class="meta"><b>Aramco tower "damage"</b>Lead Stories, Nov 2026</div></a>
+    </div>
+
+    <div class="callout reveal">
+      <div class="big">12<small>/59</small></div>
+      <div>
+        <h3>The one signal that survived sharing: Google's hidden watermark.</h3>
+        <p>Fact-checkers, using Google's and OpenAI's own checking tools, found Google's SynthID watermark in 12 of the 59 viral fakes. Our pixel detectors don't read watermarks: they guess from how an image looks, and they called <b style="color:#fff">all 12</b> "real." Our own watermark check, run through Gemini on 25 images so far, found the watermark in 1 of the 2 images made with Google's Imagen, and correctly found none in the other 23.</p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- EACH CHECK -->
+  <section class="wrap" id="checks">
+    <div class="reveal">
+      <p class="label"><span class="ours">Our test</span> Each check, side by side</p>
+      <h2>Three detectors report 98–99% on their own test sets. None clears the bar on viral images.</h2>
+      <p class="lede">The bars show what each check said about the <b>AI images</b> in each group. Below each bar: how many <b>real photos</b> it wrongly called AI, and how often it was right whenever it gave an answer. Each detector counts only answers where it was at least 95% sure.</p>
+    </div>
+    <div class="legend reveal"><span><i style="background:var(--caught)"></i>AI caught</span><span><i style="background:var(--missed)"></i>AI called "real"</span><span><i style="background:var(--unknown)"></i>No answer</span></div>
+    <div class="score reveal" id="scorecard">
+      <div class="score-head"><span>Check</span><span>Originals <span class="sub">· 60 AI, 60 real</span></span><span>Re-shared copies <span class="sub">· 60 AI, 60 real</span></span><span class="hl">Viral, fact-checked <span class="sub">· 59 AI, 64 real</span></span></div>
+    </div>
+    <p class="score-note reveal">"Right when it answers" counts both kinds of answer, "AI" and "real", against the 80% bar. The accuracy each detector reports on its own test set comes from its model card, the description page each model publishes on <a href="https://huggingface.co">Hugging Face</a>, the main site for sharing AI models. Google's watermark check has run on 25 of the 363 images so far.</p>
+  </section>
+
+  <!-- WHAT IT MEANS -->
+  <section class="wrap">
+    <div class="reveal">
+      <p class="label">What it means</p>
+      <h2>An honest display says less, and admits what it doesn't know.</h2>
+      <p class="lede">Detectors can't vouch for an image. Labels and watermarks can, when they're there. That gives three levels:</p>
+    </div>
+    <div class="levels reveal">
+      <div class="level"><img src="assets/strip-original.jpg" alt="Adobe Firefly portrait with a signed label"><span class="pill conf">✓ Confirmed AI</span><p>Proof found in the image itself: a signed label, a "made by AI" tag, or Google's watermark. Here: signed by Adobe Firefly. Right every time, but rare.</p></div>
+      <div class="level"><img src="assets/fc_alaska-frozen-tree.jpg" alt="AI image of a frozen tree in Alaska"><span class="pill like">◐ Likely AI</span><p>A detector's guess from the pixels, shown only when it's at least 95% sure the image is AI. It rated <a href="https://www.snopes.com/fact-check/image-alaska-tree-ice/">this viral fake</a> 100% likely AI, and was right. But a guess isn't proof, so it's "Likely," not "Confirmed." There's no "likely real" badge, because the detector's "real" verdicts were too often wrong.</p></div>
+      <div class="level"><img src="assets/fc_seven-dogs-selfie.jpg" alt="AI image of seven dogs taking a selfie"><span class="pill dunno">? Don't know</span><p>Everything else. Today that covers most viral images, including <a href="https://leadstories.com/hoax-alert/2026/03/ffact-check-fake-selfie-of-seven-dogs-walking-together-in-china-is-not-real-photo.html">this fake</a>, which the detector was 99.8% sure was real.</p></div>
+    </div>
+
+
+    <div class="reveal" style="margin-top:56px">
+      <h3>How our 363 images would sort</h3>
+      <p class="muted" style="margin:0 0 16px;font-size:15px">Using labels, Google's watermark and the SwinV2 detector.</p>
+    </div>
+    <div class="sort reveal">
+      <div class="sort-row sort-head"><span>Images</span><span>✓ Confirmed AI</span><span>◐ Likely AI</span><span>? Don't know</span></div>
+      <div class="sort-row"><span><b>Originals</b><small>60 AI, 60 real</small></span><span><b>12</b><small>all correct</small></span><span><b>39</b><small>34 AI · <em>5 real photos wrongly flagged</em></small></span><span><b>69</b><small>14 AI, 55 real</small></span></div>
+      <div class="sort-row"><span><b>Re-shared copies</b><small>simulated · 60 AI, 60 real</small></span><span><b>0</b><small>labels stripped</small></span><span><b>44</b><small>all correct</small></span><span><b>76</b><small>16 AI, 60 real</small></span></div>
+      <div class="sort-row hl"><span><b>Viral, fact-checked</b><small>59 AI, 64 real</small></span><span><b>0</b><small>no labels found</small></span><span><b>9</b><small>all correct</small></span><span><b>114</b><small>50 AI, 64 real · 93% of the images</small></span></div>
+    </div>
+    <p class="score-note reveal">No image was ever "Confirmed real": only a signed camera label can prove that, and none of our real photos carried one.</p>
+
+    <div class="pointless reveal">
+      <h3>Is AI detection pointless?</h3>
+      <p>No, but the free detectors we tested don't work as a public verdict on viral images. Other research has done better than our test: on deepfakes that circulated in 2024, the best paid detector was right 82% of the time, and a retrained free model reached 81% (<a href="https://arxiv.org/abs/2503.02857">Deepfake-Eval-2024</a>; <a href="https://arxiv.org/abs/2509.04150">Georgia Tech</a>, the authors' own figures).</p>
+      <div class="two-col">
+        <div><h4>Why they struggle</h4><ul>
+          <li>They learn the quirks of the generators they were trained on, and new generators arrive every few months.</li>
+          <li>Fakes made to fool people are picked because they look real.</li>
+          <li>Sharing wipes out the faint traces they rely on: one compression flipped our Firefly portrait from 99.7% to 9%.</li>
+          <li>Most images people see are real, so even a small rate of false flags accuses many real photos.</li></ul></div>
+        <div><h4>What would have to be true</h4><ul>
+          <li>Constant retraining on new generators, like antivirus updates, which needs AI companies to share samples.</li>
+          <li>Checking original files, not recompressed copies.</li>
+          <li>Used as one signal among several, for flagging likely AI or helping fact-checkers decide what to look at first, never as proof something is real.</li></ul></div>
+      </div>
+    </div>
+
+    <div class="means reveal">
+      <div>
+        <h3>What this rules out</h3>
+        <ul>
+          <li><b>A display that leans on detectors.</b> On real-world fakes it errs in the worst direction: it calls them real.</li>
+          <li><b>Trusting labels in the file.</b> No re-shared or viral image kept one.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>What else could be tried</h3>
+        <ul>
+          <li><b>One checker for every company's watermark.</b> Each company now checks only its own. The watermark is the signal that survived sharing.</li>
+          <li><b>A lookup by look-alike.</b> A public registry that matches a re-shared copy or screenshot back to its labeled original.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- CITATIONS -->
+  <section class="wrap" id="citations">
+    <div class="reveal">
+      <p class="label"><span class="ours">Our test</span> Part two: AI answers</p>
+      <h2>Do AI answers' citations say what the answer claims?</h2>
+      <p class="lede">The same question for text: when an AI answer cites a source, does the source back it up? We asked Perplexity, which searches the web and cites what it finds, 30 everyday questions about health, science, news, money and how-to. Then we opened every source.</p>
+    </div>
+    <div class="stats reveal" style="margin-top:8px">
+      <div class="stat"><div class="v">0<small>/50</small></div><p><b>Cited links that were dead or led to a homepage.</b> 46 loaded; 4 sites refused automated access. For an AI that searches first, made-up links weren't the problem.</p></div>
+      <div class="stat"><div class="v">7<small>/25</small></div><p><b>Claims a person judged only partly backed by their source,</b> after reading each source in full. None said something the source didn't say at all, and none contradicted it.</p></div>
+      <div class="stat"><div class="v">163</div><p><b>Sentences in the 30 answers with no citation at all,</b> against 86 that had one. Most of what the answers said came with no source.</p></div>
+    </div>
+    <div class="two reveal" style="margin-top:56px">
+      <div>
+        <h3>The common problem is overreach, not fake sources</h3>
+        <p class="muted" style="font-size:16px;margin:0 0 14px">The "partly" claims say a little more than their source does:</p>
+        <ul style="color:var(--ink-2);padding-left:20px;margin:0">
+          <li style="margin-bottom:10px"><b style="color:var(--ink)">An added cause:</b> "puberty shifts the body clock later," where the source says teens' sleep timing shifts, but never says puberty causes it.</li>
+          <li style="margin-bottom:10px"><b style="color:var(--ink)">A sharpened number:</b> a precise figure or time that the source states differently or more loosely.</li>
+          <li><b style="color:var(--ink)">A summary credited to a source</b> that covers only part of it.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>An automatic checker can't settle it alone</h3>
+        <p class="muted" style="font-size:16px;margin:0 0 14px">A free AI model, run locally, judged each claim against its source. Compared with the person's 25 judgments:</p>
+        <ul style="color:var(--ink-2);padding-left:20px;margin:0">
+          <li style="margin-bottom:10px"><b style="color:var(--ink)">24 of 25 agreed</b> when "partly" counts as backed up. It reliably tells whether a source is on topic and broadly agrees.</li>
+          <li style="margin-bottom:10px"><b style="color:var(--ink)">19 of 25</b> on the strict question. It never answered "partly," so it passed every overreach.</li>
+          <li><b style="color:var(--ink)">Where to draw the line is a judgment call.</b> Is "roughly 8%" backed up by a source that says 8.2%? A citation check needs a shared rule for that, and should be measured against how often two people agree, not one.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="score-note reveal" style="margin-top:28px">Weak points: one AI tool (Perplexity), one person's judgments, 25 claims checked by hand. AI tools that write links from memory rather than searching are where made-up links are more likely; they weren't tested here.</p>
+  </section>
+</main>
+
+<footer class="wrap">
+  <div class="links">
+    <a href="/">Try the tool: Is this image AI?</a>
+    <a href="https://github.com/heaversm/is-this-ai/blob/main/image-test/results/report.md">Raw report</a>
+    <a href="https://github.com/heaversm/is-this-ai">Code and how to re-run</a>
+  </div>
+  <p><b>Where the images came from:</b> the AI originals and real photos are from <a href="https://commons.wikimedia.org">Wikimedia Commons</a>; each file's Commons page, with its creator and licence, is listed in <a href="https://github.com/heaversm/is-this-ai/blob/main/image-test/collect/sources_wikimedia.csv">sources_wikimedia.csv</a>. The portrait shown throughout is <a href="https://commons.wikimedia.org/wiki/File:Adobe_Firefly_generated_realistic_portrait.jpg">"Adobe Firefly generated realistic portrait"</a> on Commons. The viral images are the copies that circulated on social media, found through the fact-check article linked from each one (Lead Stories, Snopes, PolitiFact, Newschecker, Full Fact, BOOM, Alt News and Correctiv), listed in <a href="https://github.com/heaversm/is-this-ai/blob/main/image-test/collect/sources_factcheck.csv">sources_factcheck.csv</a>, and shown here for research and commentary. The simulated re-shared copies were made by our own script from the Commons files.</p>
+  <p>Weak points: one batch of viral images (123, mostly US and English-language); fact-check verdicts taken as the answer; the detector's confidence cutoff picked on these same images (the cross-validated figure is similar, 80%); images only. Built and run Nov 10, 2026.</p>
+</footer>
+
+<script>
+
+  const CHECKS = {"meta": {"orig": {"ai_caught": 11, "ai_missed": 0, "ai_unk": 49, "n_ai": 60, "n_real": 60, "real_wrong": 0, "right": 11, "answered": 11}, "reshare": {"ai_caught": 0, "ai_missed": 0, "ai_unk": 60, "n_ai": 60, "n_real": 60, "real_wrong": 0, "right": 0, "answered": 0}, "viral": {"ai_caught": 0, "ai_missed": 0, "ai_unk": 59, "n_ai": 59, "n_real": 64, "real_wrong": 0, "right": 0, "answered": 0}}, "gemini": {"orig": {"ai_caught": 1, "ai_missed": 0, "ai_unk": 59, "n_ai": 60, "n_real": 60, "real_wrong": 0, "right": 1, "answered": 1, "checked": 22, "found": 1}, "reshare": {"ai_caught": 0, "ai_missed": 0, "ai_unk": 60, "n_ai": 60, "n_real": 60, "real_wrong": 0, "right": 0, "answered": 0, "checked": 0, "found": 0}, "viral": {"ai_caught": 0, "ai_missed": 0, "ai_unk": 59, "n_ai": 59, "n_real": 64, "real_wrong": 0, "right": 0, "answered": 0, "checked": 3, "found": 0}}, "ateeqq_siglip": {"orig": {"ai_caught": 52, "ai_missed": 6, "ai_unk": 2, "n_ai": 60, "n_real": 60, "real_wrong": 6, "right": 104, "answered": 116}, "reshare": {"ai_caught": 53, "ai_missed": 5, "ai_unk": 2, "n_ai": 60, "n_real": 60, "real_wrong": 6, "right": 105, "answered": 116}, "viral": {"ai_caught": 28, "ai_missed": 26, "ai_unk": 5, "n_ai": 59, "n_real": 64, "real_wrong": 21, "right": 65, "answered": 112}}, "haywoodsloan_swinv2": {"orig": {"ai_caught": 45, "ai_missed": 7, "ai_unk": 8, "n_ai": 60, "n_real": 60, "real_wrong": 5, "right": 92, "answered": 104}, "reshare": {"ai_caught": 44, "ai_missed": 9, "ai_unk": 7, "n_ai": 60, "n_real": 60, "real_wrong": 0, "right": 98, "answered": 107}, "viral": {"ai_caught": 9, "ai_missed": 39, "ai_unk": 11, "n_ai": 59, "n_real": 64, "real_wrong": 0, "right": 69, "answered": 108}}, "organika_sdxl": {"orig": {"ai_caught": 33, "ai_missed": 17, "ai_unk": 10, "n_ai": 60, "n_real": 60, "real_wrong": 7, "right": 77, "answered": 101}, "reshare": {"ai_caught": 35, "ai_missed": 18, "ai_unk": 7, "n_ai": 60, "n_real": 60, "real_wrong": 10, "right": 78, "answered": 106}, "viral": {"ai_caught": 18, "ai_missed": 25, "ai_unk": 16, "n_ai": 59, "n_real": 64, "real_wrong": 12, "right": 53, "answered": 90}}, "commfor_vit384": {"orig": {"ai_caught": 24, "ai_missed": 17, "ai_unk": 19, "n_ai": 60, "n_real": 60, "real_wrong": 0, "right": 78, "answered": 95}, "reshare": {"ai_caught": 19, "ai_missed": 19, "ai_unk": 22, "n_ai": 60, "n_real": 60, "real_wrong": 0, "right": 72, "answered": 91}, "viral": {"ai_caught": 3, "ai_missed": 43, "ai_unk": 13, "n_ai": 59, "n_real": 64, "real_wrong": 0, "right": 60, "answered": 103}}};
+  const INFO = [
+    {k:'meta', name:'Labels in the file', who:'<a href="https://c2pa.org">C2PA</a>, <a href="https://cv.iptc.org/newscodes/digitalsourcetype/">IPTC</a>, generator settings', desc:'Reads signed "Content Credentials", the standard "made by AI" tag, and settings AI tools save into the file.', tags:['Certain','Local · free']},
+    {k:'gemini', name:"Google's watermark", who:'<a href="https://deepmind.google/technologies/synthid/">SynthID</a>, checked through <a href="https://gemini.google.com">Gemini</a>', desc:"A mark Google's tools hide in the pixels. It survives screenshots and compression, but only Google can check it, and it only marks images from Google's own tools.", tags:['Certain','Google\'s servers'], text:{orig:['Found it in <b>1 of 2</b> images made with Google\'s Imagen. Correctly found none in <b>20</b> images from other tools.', 'pass', '✓ No false finds in 22 checked'], reshare:['Not run on these.', 'na', 'Not run'], viral:['<b>3</b> real photos checked: correctly found none.', 'na', 'Too few checked to score']}},
+    {k:'haywoodsloan_swinv2', name:'SwinV2 detector', who:'<a href="https://huggingface.co/haywoodsloan/ai-image-detector-deploy">haywoodsloan · Hugging Face</a>', desc:'The free detector that did best overall, and the one the charts above use. Trained with Hugging Face AutoTrain. Reports 98.1% on its own validation set; training data not described.', tags:['A guess','Local · free']},
+    {more:true, k:'ateeqq_siglip', name:'SigLIP detector', who:'<a href="https://huggingface.co/Ateeqq/ai-vs-human-image-detector">Ateeqq · Hugging Face</a>', desc:'Fine-tuned on 60,000 AI and 60,000 human images. Reports 99.2% on its own test set; its card notes users report overfitting.', tags:['A guess','Local · free']},
+    {more:true, k:'organika_sdxl', name:'SDXL detector', who:'<a href="https://huggingface.co/Organika/sdxl-detector">Organika · Hugging Face</a>', desc:'Trained on Wikimedia photos paired with Stable Diffusion XL images. Reports 98.1%; its card warns it is weaker on other generators.', tags:['A guess','Local · free']},
+    {more:true, k:'commfor_vit384', name:'Community Forensics', who:'<a href="https://arxiv.org/abs/2411.04125">Park &amp; Owens · CVPR 2025 paper</a>', desc:'A research model trained on images from thousands of different generators, to cope with ones it has never seen.', tags:['A guess','Local · free']},
+  ];
+  const GROUPS = [['orig','Originals'],['reshare','Re-shared copies'],['viral','Viral, fact-checked']];
+  const pct = (a,b) => b ? Math.round(100*a/b) : 0;
+  const card = document.getElementById('scorecard');
+  const more = document.createElement('details'); more.className = 'more-detectors';
+  more.innerHTML = '<summary>See the other detectors (3)</summary>';
+  for (const c of INFO) {
+    const row = document.createElement('div'); row.className = 'score-row';
+    let html = `<div><h3>${c.name}</h3><p class="who">${c.who}</p><p class="desc">${c.desc}</p><div class="tags">${c.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div></div>`;
+    for (const [g,label] of GROUPS) {
+      const s = CHECKS[c.k][g];
+      let bar, lines, chip;
+      if (c.text) {
+        const [t, kind, label2] = c.text[g];
+        bar = '';
+        lines = t;
+        chip = `<span class="verdict-chip ${kind}">${label2}</span>`;
+      } else {
+        bar = `<div class="mini" role="img" aria-label="${label}: ${s.ai_caught} AI caught, ${s.ai_missed} called real, ${s.ai_unk} no answer"><i class="c" style="flex:${s.ai_caught}"></i><i class="m" style="flex:${s.ai_missed}"></i><i class="u" style="flex:${s.ai_unk}"></i></div>`;
+        const acc = s.answered ? pct(s.right, s.answered) : null;
+        lines = `<b>${s.ai_caught}</b> caught · ${s.ai_missed} called real · ${s.ai_unk} no answer<br>` +
+                (s.real_wrong ? `<span class="accuse">${s.real_wrong} real photos called AI</span>` : `0 real photos called AI`);
+        chip = acc === null ? `<span class="verdict-chip na">Never answered</span>`
+             : acc >= 80 ? `<span class="verdict-chip pass">✓ Right ${acc}% when it answers</span>`
+             : `<span class="verdict-chip fail">✗ Right ${acc}% when it answers</span>`;
+      }
+      html += `<div><div class="group-label">${label}</div>${bar}<div class="cell-line">${lines}</div>${chip}</div>`;
+    }
+    row.innerHTML = html; (c.more ? more : card).appendChild(row);
+  }
+  card.appendChild(more);
+
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      e.target.classList.add('in');
+      e.target.querySelectorAll('.bar').forEach(bar => {
+        const total = +bar.dataset.total;
+        bar.querySelectorAll('.seg').forEach(s => s.style.width = (100 * s.dataset.n / total) + '%');
+      });
+      e.target.querySelectorAll('.meter b').forEach(b => b.style.width = b.dataset.w + '%');
+      io.unobserve(e.target);
+    }
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+</body>
+</html>

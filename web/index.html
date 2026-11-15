@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Is this image AI? — an honest check that runs in your browser</title>
+<meta name="description" content="Drop in an image. Checks for signed AI labels and runs a free AI detector, entirely in your browser. An honest answer, including 'don't know.'">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600;6..72,700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --paper:#f6f3ec; --paper-2:#ece7dc; --ink:#151412; --ink-2:#4d4a44; --ink-3:#7b776e; --rule:#d8d2c4;
+    --ai:#2a78d6; --real:#eb6834; --unsure:#b9b3a5; --serif:"Newsreader",Georgia,serif; --sans:"Public Sans","Helvetica Neue",sans-serif; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:0 32px 80px; background:var(--paper); color:var(--ink); font:400 16px/1.55 var(--sans); -webkit-font-smoothing:antialiased; }
+  a { color:inherit; text-decoration-color:var(--ink-3); text-underline-offset:3px; } a:hover { text-decoration-color:var(--ink); }
+  .wrap { max-width:1080px; margin:0 auto; }
+  .mast { border-bottom:1px solid var(--ink); padding:18px 0 12px; display:flex; justify-content:space-between; font:500 12px/1 var(--sans); letter-spacing:.12em; text-transform:uppercase; color:var(--ink-2); }
+  .hero { display:grid; grid-template-columns:1.3fr 1fr; gap:48px; align-items:end; padding:48px 0 32px; }
+  .kicker { font:600 13px/1 var(--sans); letter-spacing:.14em; text-transform:uppercase; color:var(--real); margin:0 0 16px; }
+  h1 { font:600 clamp(40px,5.5vw,64px)/1.0 var(--serif); letter-spacing:-.02em; margin:0 0 18px; }
+  .dek { font:400 20px/1.45 var(--serif); color:var(--ink-2); margin:0; max-width:40ch; }
+  .facts { border-top:3px solid var(--ink); padding-top:14px; font-size:14px; color:var(--ink-2); }
+  .facts div { padding:8px 0; border-bottom:1px solid var(--rule); } .facts b { color:var(--ink); }
+  .label { font:600 12px/1 var(--sans); letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); margin:0 0 12px; }
+
+  .drop { border:2px dashed var(--ink-3); border-radius:4px; padding:52px 24px; text-align:center; cursor:pointer; transition:background .15s,border-color .15s; background:rgba(255,255,255,.4); }
+  .drop.over { background:#e4ecf7; border-color:var(--ai); }
+  .drop b { display:block; font:600 24px/1.2 var(--serif); margin-bottom:6px; }
+  .drop span { color:var(--ink-3); font-size:14px; }
+  .drop:focus-visible { outline:2px solid var(--ai); outline-offset:3px; }
+  .status { display:flex; gap:10px; align-items:center; font-size:14px; color:var(--ink-2); margin:12px 0 0; }
+  .dot { width:9px; height:9px; border-radius:50%; background:var(--unsure); flex:none; } .dot.ok { background:#1f8a4c; }
+  .err { color:#9c3a12; font-weight:600; margin-top:14px; }
+
+  .result { display:none; margin-top:44px; } .result.show { display:block; }
+  .top { display:grid; grid-template-columns:320px 1fr; gap:44px; align-items:start; padding-bottom:30px; border-bottom:1px solid var(--ink); }
+  .top img { width:100%; max-height:440px; object-fit:contain; background:#fff; border:1px solid var(--ink); display:block; }
+  .fname { font-size:13px; color:var(--ink-3); margin-top:8px; word-break:break-all; }
+  .pill { display:inline-flex; align-items:center; gap:10px; font:600 22px/1 var(--sans); padding:13px 20px; border-radius:999px; margin:4px 0 18px; }
+  .pill.confirmed_ai { background:var(--ink); color:var(--paper); }
+  .pill.confirmed_real { background:#1f6b3a; color:#fff; }
+  .pill.likely_ai { background:#dbe8f8; color:#174a87; }
+  .pill.dont_know { background:var(--paper-2); color:var(--ink-2); border:1px dashed var(--ink-3); }
+  .pill.waiting { background:var(--paper-2); color:var(--ink-3); }
+  .why { font:400 20px/1.5 var(--serif); color:var(--ink-2); margin:0 0 16px; max-width:52ch; }
+  .key { font-size:13px; color:var(--ink-3); max-width:62ch; }
+
+  h2 { font:600 26px/1.2 var(--serif); margin:40px 0 4px; }
+  .sub { color:var(--ink-3); font-size:14px; margin:0 0 12px; max-width:70ch; }
+  .row { display:grid; grid-template-columns:230px 1fr; gap:30px; padding:20px 0; border-bottom:1px solid var(--rule); }
+  .row:first-of-type { border-top:1px solid var(--ink); }
+  .row h3 { font:600 19px/1.2 var(--serif); margin:0 0 4px; }
+  .who { font-size:13px; color:var(--ink-3); }
+  .tag { display:inline-block; font:600 11px/1 var(--sans); letter-spacing:.08em; text-transform:uppercase; padding:4px 6px; border:1px solid var(--ink-3); border-radius:2px; color:var(--ink-2); margin-top:10px; }
+  .found { font-weight:600; margin:0 0 6px; } .none { color:var(--ink-2); margin:0; }
+
+  .scale { position:relative; height:14px; border-radius:7px; background:linear-gradient(90deg, rgba(235,104,52,.25) 0 5%, var(--paper-2) 5% 95%, rgba(42,120,214,.25) 95% 100%); margin:6px 0; }
+  .scale .mk { position:absolute; top:50%; width:16px; height:16px; border-radius:50%; border:2px solid var(--paper); transform:translate(-50%,-50%); box-shadow:0 0 0 1px var(--ink); transition:left .6s cubic-bezier(.2,.7,.2,1); }
+  .scale-key { display:flex; justify-content:space-between; font-size:11px; color:var(--ink-3); }
+  .reading { font-size:15px; margin-top:6px; } .context { font-size:13px; color:var(--ink-3); margin-top:4px; }
+  .dl { margin:4px 0 6px; } .dl .bar { height:8px; background:var(--paper-2); border-radius:4px; overflow:hidden; } .dl .bar b { display:block; height:100%; width:0; background:var(--ai); transition:width .2s; }
+  .dl p { font-size:14px; color:var(--ink-2); margin:8px 0 0; }
+
+  .wm-btns { display:flex; gap:10px; flex-wrap:wrap; margin:14px 0 10px; }
+  a.wm { display:inline-block; font:600 14px/1 var(--sans); padding:11px 14px; border-radius:3px; background:var(--ink); color:var(--paper); text-decoration:none; }
+  a.wm:hover { background:#000; } a.wm.alt { background:transparent; color:var(--ink); border:1px solid var(--ink); } a.wm.alt:hover { background:var(--paper-2); }
+  .wm-note { font-size:13px; color:var(--ink-3); margin:0; }
+  details.more { margin-top:8px; } details.more summary { cursor:pointer; padding:18px 0; font-weight:600; border-bottom:1px solid var(--rule); list-style:none; }
+  details.more summary::-webkit-details-marker { display:none; }
+  details.more summary::before { content:"+ "; color:var(--ink-3); } details.more[open] summary::before { content:"– "; }
+  details.more summary small { font-weight:400; color:var(--ink-3); margin-left:6px; }
+  button.go { font:600 15px/1 var(--sans); padding:12px 16px; border-radius:3px; border:1px solid var(--ink); background:var(--ink); color:var(--paper); cursor:pointer; margin:16px 0 4px; }
+  button.go:hover { background:#000; } button.go:disabled { opacity:.5; cursor:wait; }
+
+  .about { display:grid; grid-template-columns:1fr 1fr 1fr; gap:36px; margin-top:64px; padding-top:28px; border-top:1px solid var(--ink); font-size:14px; color:var(--ink-2); }
+  .about h3 { font:600 18px/1.2 var(--serif); color:var(--ink); margin:0 0 8px; }
+  .about p { margin:0 0 10px; }
+  footer { margin-top:40px; font-size:13px; color:var(--ink-3); }
+  @media (max-width:820px) { body { padding:0 18px 60px; } .hero, .top, .row, .about { grid-template-columns:1fr; gap:16px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="mast"><span>Mike Heavers</span><span>Research prototype · <a href="/findings/">The findings</a> · <a href="https://github.com/heaversm/is-this-ai">Code</a></span></header>
+
+  <div class="hero">
+    <div>
+      <p class="kicker">Honest AI-image check</p>
+      <h1>Is this image AI?</h1>
+      <p class="dek">Drop in an image. We look for proof inside the file, then ask a free AI detector, all on your own computer. You get an honest answer, including "don't know."</p>
+    </div>
+    <div class="facts">
+      <div><b>Private.</b> Your image never leaves this browser.</div>
+      <div><b>One-time download.</b> The detector is 393 MB, saved in your browser after the first check.</div>
+      <div><b>Honest.</b> In our test of 363 images, most viral AI fakes could only get "don't know."</div>
+    </div>
+  </div>
+
+  <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose or drop an image">
+    <b>Drop an image here</b>
+    <span>or click to choose one · JPEG, PNG, WebP, GIF, AVIF</span>
+    <input type="file" id="file" accept="image/*" hidden>
+  </div>
+  <p class="status"><span class="dot" id="sdot"></span><span id="stext">Checking whether the detector is already saved in this browser…</span></p>
+  <p class="err" id="err"></p>
+
+  <div class="result" id="result">
+    <div class="top">
+      <div><img id="preview" alt="The image being checked"><div class="fname" id="fname"></div></div>
+      <div>
+        <span class="pill waiting" id="pill">Checking…</span>
+        <p class="why" id="why"></p>
+        <p class="key"><b>Confirmed</b> means proof found in the image itself: a signed label or a "made by AI" tag. A hidden watermark is also proof, but has to be checked on Google's site, linked below. <b>Likely AI</b> means the detector is at least 95% sure: a guess, not proof. There's no "likely real," because in our test detectors' "real" verdicts on viral images were wrong too often.</p>
+      </div>
+    </div>
+
+    <h2>Proof in the image</h2>
+    <p class="sub">Certain when present, but most shared images carry none, because apps strip it on upload.</p>
+    <div class="row">
+      <div><h3>Labels in the file</h3><div class="who"><a href="https://c2pa.org" target="_blank">C2PA</a> Content Credentials, the <a href="https://cv.iptc.org/newscodes/digitalsourcetype/" target="_blank">IPTC</a> "made by AI" tag, generator settings</div><span class="tag">Certain</span></div>
+      <div id="labels"><p class="none">Reading the file…</p></div>
+    </div>
+    <div class="row">
+      <div><h3>Hidden watermark</h3><div class="who"><a href="https://deepmind.google/models/synthid/" target="_blank">SynthID</a>, read only by Google's checker</div><span class="tag">Certain · checked elsewhere</span></div>
+      <div>
+        <p class="none">Images from Google, OpenAI, Nvidia and Kakao's AI tools carry an invisible watermark designed to survive compression and re-sharing. In our test, fact-checkers found it in 12 of 59 viral fakes that our detectors missed. Only Google can read it, so this page can't check it for you. Upload the same image to Google's checker; it asks you to sign in.</p>
+        <div class="wm-btns"><a class="wm" href="https://synthid.com" target="_blank" rel="noopener">Check at synthid.com ↗</a><a class="wm alt" href="https://gemini.google.com/app" target="_blank" rel="noopener">Or ask Gemini ↗</a></div>
+        <p class="wm-note"><b>Found:</b> made or edited with one of those four companies' AI tools. <b>Not found:</b> rules out only those tools, not AI in general.</p>
+      </div>
+    </div>
+
+    <h2>The detector</h2>
+    <p class="sub">An AI model that estimates from the pixels how likely the image is to be AI. A marker in a shaded end means it's at least 95% sure.</p>
+    <div id="best"></div>
+
+    <details class="more" id="more"><summary>See the other detectors (3)<small>· 394 MB more to download</small></summary>
+      <div id="others"><button class="go" id="loadOthers">Download and run the other three detectors (394 MB)</button><p class="sub">They're saved in your browser too, so this only happens once.</p></div>
+    </details>
+  </div>
+
+  <div class="about">
+    <div><h3>How it works</h3><p>First it reads the file for signed labels and "made by AI" tags. Then it runs <a href="https://huggingface.co/haywoodsloan/ai-image-detector-deploy" target="_blank">SwinV2</a>, a free detector, in your browser. Its download is saved, so later visits skip it, and checks take a second or two.</p></div>
+    <div><h3>What it can't do</h3><p>Detectors guess, and fakes made to fool people are the ones they miss. It can't read the hidden SynthID watermark itself, since only Google can, but it links to Google's checker. No label doesn't mean real: most apps strip labels on upload.</p></div>
+    <div><h3>Where this comes from</h3><p>A test of 363 images, 123 of them viral and fact-checked. The figures next to each detector are from that test: <a href="/findings/">see the findings</a>. The code is <a href="https://github.com/heaversm/is-this-ai" target="_blank">on GitHub</a>. <a href="https://huggingface.co/mikemoz/is-this-ai-models" target="_blank">The models</a> are converted from their open-source originals.</p></div>
+  </div>
+  <footer>A research prototype, not a product. It can be wrong. Its "don't know" is an honest answer, not a failure.</footer>
+</div>
+
+<script type="module">
+import { DETECTORS, isCached, loadDetector, decode, score, verdict, checkMetadata, usingGpu } from "./js/app.js";
+const $ = (id) => document.getElementById(id);
+const VERDICT = {
+  confirmed_ai: "✓ Confirmed AI", confirmed_real: "✓ Confirmed camera capture",
+  likely_ai: "◐ Likely AI", dont_know: "? Don't know",
+};
+const WHY = {
+  likely_ai: "No proof in the file, but the detector is at least 95% sure it's AI. In our test it was right 98 of 103 times when it said this.",
+  dont_know: "No label or tag in the file, and the detector isn't sure enough to say it's AI. That doesn't mean it's real: in our test, most viral fakes landed here.",
+};
+let img = null, meta = null, pSwin = null, othersLoaded = false, run = 0;
+const finished = (id) => { if (id === run) document.body.dataset.checked = String(id); };
+
+const pct = (p) => Math.round(p * 1000) / 10;
+const mb = (b) => Math.round(b / 1e6);
+
+function progressHtml(id, label) {
+  return `<div class="dl" id="${id}"><div class="bar"><b></b></div><p>${label}</p></div>`;
+}
+function onProgress(id, totalMb) {
+  return (got, total, state) => {
+    const el = $(id); if (!el) return;
+    const t = total || totalMb * 1e6;
+    el.querySelector("b").style.width = Math.min(100, (100 * got) / t) + "%";
+    el.querySelector("p").textContent =
+      state === "starting" ? "Starting the detector…" :
+      state === true ? "Saved in your browser — starting…" :
+      `Downloading the detector: ${mb(got)} of ${mb(t)} MB. First time only; after this it's saved in your browser.`;
+  };
+}
+
+function detRow(d, p) {
+  const sure = p >= 0.95 ? "ai" : p <= 0.05 ? "real" : null;
+  const color = sure === "ai" ? "var(--ai)" : sure === "real" ? "var(--real)" : "var(--unsure)";
+  let reading, context;
+  if (sure === "ai") { reading = `<b>${pct(p)}% likely AI</b>: sure enough to count`; context = `On viral images in our test, when it said AI this confidently it was right ${d.ai[0]} of ${d.ai[1]} times.`; }
+  else if (sure === "real") { reading = `<b>${pct(1 - p)}% likely real</b>: sure, but not trusted`; context = `On viral images in our test, when it said real this confidently it was right only ${d.real[0]} of ${d.real[1]} times, so "real" isn't shown as a verdict.`; }
+  else { reading = `<b>${pct(p)}% likely AI</b>: not sure enough to count`; context = "Between 5% and 95%, our test treats it as no answer."; }
+  return `<div><div class="scale"><span class="mk" style="left:${(p * 100).toFixed(1)}%;background:${color}"></span></div>
+    <div class="scale-key"><span>Real</span><span>AI</span></div><div class="reading">${reading}</div><div class="context">${context}</div></div>`;
+}
+function rowShell(d, id, inner) {
+  return `<div class="row" id="${id}"><div><h3>${d.name}</h3><div class="who"><a href="${d.href}" target="_blank">${d.who}</a></div><div class="who" style="margin-top:6px">${d.note}</div><span class="tag">A guess</span></div><div class="cell">${inner}</div></div>`;
+}
+
+function labelsHtml(m) {
+  if (m.verdict === "ai" || m.verdict === "real") return `<p class="found">Found. ${m.reason}</p>`;
+  let extra = m.camera ? ` Camera details are present (${m.camera}), but those are easy to fake, so they don't count.` : "";
+  if (m.c2paInvalid) extra += ` A signed label is present but isn't valid (${m.c2paInvalid}).`;
+  return `<p class="none">Nothing found. Most images shared online carry no label.${extra}</p>`;
+}
+
+function renderVerdict() {
+  const v = verdict(meta, pSwin);
+  const waiting = pSwin == null && v === "dont_know";
+  $("pill").className = "pill " + (waiting ? "waiting" : v);
+  $("pill").textContent = waiting ? "Waiting for the detector…" : VERDICT[v];
+  $("why").textContent = v === "confirmed_ai" || v === "confirmed_real" ? meta.reason : waiting ? "The file has no label or tag. The detector will give its read next." : WHY[v];
+}
+
+async function runOthers() {
+  $("loadOthers").disabled = true;
+  const others = DETECTORS.slice(1);
+  $("others").innerHTML = others.map((d) => rowShell(d, "row-" + d.k, progressHtml("dl-" + d.k, "Waiting…"))).join("");
+  for (const d of others) {
+    try {
+      await loadDetector(d.k, onProgress("dl-" + d.k, d.mb));
+      const p = await score(d.k, img);
+      if ($("row-" + d.k)) $("row-" + d.k).querySelector(".cell").innerHTML = detRow(d, p);
+    } catch (e) { $("row-" + d.k).querySelector(".cell").innerHTML = `<p class="err">Couldn't run: ${e.message}</p>`; }
+  }
+  othersLoaded = true;
+  document.body.dataset.others = "done";
+}
+
+async function handle(file) {
+  if (!file) return;
+  const id = ++run;
+  const stale = () => id !== run;  // a newer image has been dropped: stop updating the page
+  $("err").textContent = "";
+  let decoded;
+  try { decoded = await decode(file); } catch { if (!stale()) { $("err").textContent = "This browser can't open that file as an image. Try a JPEG, PNG or WebP."; finished(id); } return; }
+  if (stale()) return;
+  img = decoded;
+  $("preview").src = URL.createObjectURL(file); $("fname").textContent = file.name;
+  meta = { verdict: "none" }; pSwin = null;
+  $("result").classList.add("show"); renderVerdict();
+  $("labels").innerHTML = `<p class="none">Reading the file…</p>`;
+  $("best").innerHTML = rowShell(DETECTORS[0], "row-swinv2", progressHtml("dl-swinv2", "Preparing…"));
+  $("result").scrollIntoView({ behavior: "smooth" });
+
+  const m = await checkMetadata(file);
+  if (stale()) return;
+  meta = m; $("labels").innerHTML = labelsHtml(meta); renderVerdict();
+
+  try {
+    await loadDetector("swinv2", onProgress("dl-swinv2", 393));
+    const myImg = img, p = await score("swinv2", myImg);
+    if (stale()) return;
+    pSwin = p;
+    $("row-swinv2").querySelector(".cell").innerHTML = detRow(DETECTORS[0], pSwin);
+    setStatus(true);
+  } catch (e) {
+    $("row-swinv2").querySelector(".cell").innerHTML = `<p class="err">The detector couldn't run in this browser: ${e.message}</p>`;
+  }
+  if (stale()) return;
+  renderVerdict();
+  if (othersLoaded) {
+    for (const d of DETECTORS.slice(1)) {
+      const p = await score(d.k, img);
+      if (stale()) return;
+      if ($("row-" + d.k)) $("row-" + d.k).querySelector(".cell").innerHTML = detRow(d, p);
+    }
+  } else $("others").innerHTML = `<button class="go" id="loadOthers">Download and run the other three detectors (394 MB)</button><p class="sub">They're saved in your browser too, so this only happens once.</p>`;
+  $("loadOthers") && ($("loadOthers").onclick = runOthers);
+  finished(id);
+}
+
+function setStatus(ready) {
+  $("sdot").className = "dot" + (ready ? " ok" : "");
+  $("stext").textContent = ready
+    ? `Detector ready: saved in this browser${usingGpu() ? ", running on your graphics chip" : ""}. The first check after opening the page takes a few seconds; after that, about a second each.`
+    : "The first check downloads the detector (393 MB). After that it's saved in this browser.";
+}
+
+const drop = $("drop");
+drop.onclick = () => $("file").click();
+drop.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("file").click(); } };
+$("file").onchange = (e) => { handle(e.target.files[0]); e.target.value = ""; };
+["dragenter", "dragover"].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", (e) => handle(e.dataTransfer.files[0]));
+document.addEventListener("dragover", (e) => e.preventDefault());
+document.addEventListener("drop", (e) => { e.preventDefault(); if (!drop.contains(e.target)) handle(e.dataTransfer.files[0]); });
+$("loadOthers").onclick = runOthers;
+isCached("swinv2").then(setStatus).catch(() => setStatus(false));
+</script>
+</body>
+</html>

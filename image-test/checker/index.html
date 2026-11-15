@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Is this image AI? — Provenance checker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600;6..72,700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f6f3ec; --paper-2: #ece7dc; --ink: #151412; --ink-2: #4d4a44; --ink-3: #7b776e; --rule: #d8d2c4;
+    --ai: #2a78d6; --real: #eb6834; --unsure: #b9b3a5;
+    --serif: "Newsreader", Georgia, serif; --sans: "Public Sans", "Helvetica Neue", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 0 32px 80px; background: var(--paper); color: var(--ink); font: 400 16px/1.5 var(--sans); -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-underline-offset: 3px; }
+  .wrap { max-width: 1040px; margin: 0 auto; }
+  .mast { border-bottom: 1px solid var(--ink); padding: 18px 0 12px; display: flex; justify-content: space-between; font: 500 12px/1 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); }
+  h1 { font: 600 clamp(36px, 5vw, 56px)/1.02 var(--serif); letter-spacing: -.02em; margin: 44px 0 12px; }
+  .dek { font: 400 19px/1.45 var(--serif); color: var(--ink-2); margin: 0 0 28px; max-width: 58ch; }
+
+  .drop { border: 2px dashed var(--ink-3); border-radius: 6px; padding: 56px 24px; text-align: center; cursor: pointer; transition: background .15s, border-color .15s; background: rgba(255,255,255,.35); }
+  .drop.over { background: #e4ecf7; border-color: var(--ai); }
+  .drop b { display: block; font: 600 22px/1.2 var(--serif); margin-bottom: 6px; }
+  .drop span { color: var(--ink-3); font-size: 14px; }
+  .drop:focus-visible { outline: 2px solid var(--ai); outline-offset: 3px; }
+  .privacy { font-size: 13px; color: var(--ink-3); margin: 10px 0 0; }
+
+  .result { display: none; margin-top: 40px; }
+  .result.show { display: block; }
+  .top { display: grid; grid-template-columns: 320px 1fr; gap: 40px; align-items: start; padding-bottom: 32px; border-bottom: 1px solid var(--ink); }
+  .top img { width: 100%; max-height: 420px; object-fit: contain; background: #fff; border: 1px solid var(--ink); display: block; }
+  .fname { font-size: 13px; color: var(--ink-3); margin-top: 8px; word-break: break-all; }
+  .pill { display: inline-flex; align-items: center; gap: 10px; font: 600 20px/1 var(--sans); padding: 12px 18px; border-radius: 999px; margin: 6px 0 18px; }
+  .pill.confirmed_ai { background: var(--ink); color: var(--paper); }
+  .pill.confirmed_real { background: #1f6b3a; color: #fff; }
+  .pill.likely_ai { background: #dbe8f8; color: #174a87; }
+  .pill.dont_know { background: var(--paper-2); color: var(--ink-2); border: 1px dashed var(--ink-3); }
+  .why { font: 400 19px/1.5 var(--serif); color: var(--ink-2); margin: 0 0 14px; max-width: 52ch; }
+  .rule-note { font-size: 13px; color: var(--ink-3); max-width: 60ch; }
+
+  h2 { font: 600 24px/1.2 var(--serif); margin: 36px 0 4px; }
+  .sub { color: var(--ink-3); font-size: 14px; margin: 0 0 14px; }
+  .row { display: grid; grid-template-columns: 220px 1fr; gap: 28px; padding: 18px 0; border-bottom: 1px solid var(--rule); }
+  .row h3 { font: 600 18px/1.2 var(--serif); margin: 0 0 4px; }
+  .row .who { font-size: 13px; color: var(--ink-3); }
+  .found { font-weight: 600; }
+  .none { color: var(--ink-2); }
+  .tag { display: inline-block; font: 600 11px/1 var(--sans); letter-spacing: .08em; text-transform: uppercase; padding: 4px 6px; border: 1px solid var(--ink-3); border-radius: 2px; color: var(--ink-2); margin-top: 8px; }
+
+  .scale { position: relative; height: 14px; border-radius: 7px; background: linear-gradient(90deg, rgba(235,104,52,.25) 0 5%, var(--paper-2) 5% 95%, rgba(42,120,214,.25) 95% 100%); margin: 6px 0 6px; }
+  .scale .dot { position: absolute; top: 50%; width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--paper); transform: translate(-50%, -50%); box-shadow: 0 0 0 1px var(--ink); transition: left .6s cubic-bezier(.2,.7,.2,1); left: 50%; }
+  .scale-key { display: flex; justify-content: space-between; font-size: 11px; color: var(--ink-3); }
+  .reading { font-size: 15px; margin-top: 6px; }
+  .reading b { font-weight: 700; }
+  .context { font-size: 13px; color: var(--ink-3); margin-top: 4px; }
+
+  button.g { font: 600 14px/1 var(--sans); padding: 10px 14px; border-radius: 3px; border: 1px solid var(--ink); background: var(--paper); cursor: pointer; }
+  button.g:hover { background: var(--ink); color: var(--paper); }
+  button.g:disabled { opacity: .5; cursor: wait; }
+  details.more summary { cursor: pointer; padding: 16px 0; font-weight: 600; border-bottom: 1px solid var(--rule); list-style: none; }
+  details.more summary::-webkit-details-marker { display: none; }
+  details.more summary::before { content: "+ "; color: var(--ink-3); }
+  details.more[open] summary::before { content: "– "; }
+  .busy { margin-top: 24px; color: var(--ink-2); font-style: italic; display: none; }
+  .busy.show { display: block; }
+  .err { color: #9c3a12; font-weight: 600; margin-top: 16px; }
+  footer { margin-top: 48px; font-size: 13px; color: var(--ink-3); max-width: 80ch; }
+  @media (max-width: 760px) { body { padding: 0 18px 60px; } .top, .row { grid-template-columns: 1fr; gap: 14px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="mast"><span>Is this image AI?</span><span>Local checker · research prototype</span></header>
+  <h1>Is this image AI?</h1>
+  <p class="dek">Drop in an image to run it through every check from our test: labels in the file, four free AI detectors, and (if you choose) Google's hidden watermark. You get an honest answer, including "don't know."</p>
+
+  <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose or drop an image">
+    <b>Drop an image here</b>
+    <span>or click to choose one · JPEG, PNG, WebP, GIF, TIFF, HEIC</span>
+    <input type="file" id="file" accept="image/*" hidden>
+  </div>
+  <p class="privacy">Checked on this computer. Nothing is uploaded anywhere, unless you press the Google watermark button for an image.</p>
+  <p class="busy" id="busy">Checking…</p>
+  <p class="err" id="err"></p>
+
+  <div class="result" id="result">
+    <div class="top">
+      <div><img id="preview" alt="The image being checked"><div class="fname" id="fname"></div></div>
+      <div>
+        <span class="pill" id="pill"></span>
+        <p class="why" id="why"></p>
+        <p class="rule-note"><b>Confirmed</b> means proof found in the image: a signed label, a "made by AI" tag, or Google's watermark. <b>Likely AI</b> means the SwinV2 detector is at least 95% sure, which is a guess, not proof. There's no "likely real": in our test, detectors' "real" verdicts on viral images were wrong too often.</p>
+      </div>
+    </div>
+
+    <h2>Proof in the image</h2>
+    <p class="sub">Certain when present, but most shared images carry none.</p>
+    <div class="row">
+      <div><h3>Labels in the file</h3><div class="who"><a href="https://c2pa.org">C2PA</a> Content Credentials, <a href="https://cv.iptc.org/newscodes/digitalsourcetype/">IPTC</a> "made by AI" tag, generator settings</div><span class="tag">Certain · local</span></div>
+      <div id="labels"></div>
+    </div>
+    <div class="row">
+      <div><h3>Google's watermark</h3><div class="who"><a href="https://deepmind.google/technologies/synthid/">SynthID</a>, checked through <a href="https://gemini.google.com">Gemini</a></div><span class="tag">Certain · Google's servers</span></div>
+      <div id="gemini"><p class="none">Only marks images made with Google's own AI tools. Checking sends this one image to Google through your Gemini account.</p><button class="g" id="gbtn">Check with Google</button></div>
+    </div>
+
+    <h2>Detectors that guess</h2>
+    <p class="sub">Each estimates from the pixels how likely the image is to be AI. A dot in a shaded end means the detector is at least 95% sure.</p>
+    <div id="best"></div>
+    <details class="more"><summary>See the other detectors (3)</summary><div id="others"></div></details>
+  </div>
+
+  <footer>Detector context figures are from our test of 363 images, 123 of them viral and fact-checked (Nov 2026), counting only answers where the detector was at least 95% sure. Findings: <a href="https://is-this-image-ai.netlify.app/findings/">is-this-image-ai.netlify.app/findings</a>. A prototype: it can be wrong, and its "don't know" is an honest answer, not a failure.</footer>
+</div>
+
+<script>
+const DET = [
+  {k:'haywoodsloan_swinv2', name:'SwinV2', who:'haywoodsloan · Hugging Face', href:'https://huggingface.co/haywoodsloan/ai-image-detector-deploy', note:'Did best overall in our test.',
+   ai:[9,9], real:[60,99]},
+  {k:'ateeqq_siglip', name:'SigLIP', who:'Ateeqq · Hugging Face', href:'https://huggingface.co/Ateeqq/ai-vs-human-image-detector', note:'Catches more fakes, but often calls real photos AI.',
+   ai:[28,49], real:[37,63]},
+  {k:'organika_sdxl', name:'SDXL detector', who:'Organika · Hugging Face', href:'https://huggingface.co/Organika/sdxl-detector', note:'Trained on Stable Diffusion XL images; weaker on others.',
+   ai:[18,30], real:[35,60]},
+  {k:'commfor_vit384', name:'Community Forensics', who:'CVPR 2025 research model', href:'https://arxiv.org/abs/2411.04125', note:'Trained on images from thousands of generators.',
+   ai:[3,3], real:[57,100]},
+];
+const VERDICT = {
+  confirmed_ai: ['✓ Confirmed AI', ''],
+  confirmed_real: ['✓ Confirmed camera capture', 'A valid signed label says this was captured by a camera, with no AI step recorded.'],
+  likely_ai: ['◐ Likely AI', 'No proof in the image, but the SwinV2 detector is at least 95% sure it\'s AI. In our test it was right 98 of 103 times when it said this.'],
+  dont_know: ['? Don\'t know', 'No label, tag or watermark found, and the detector isn\'t sure enough to say it\'s AI. That doesn\'t mean it\'s real: in our test, most viral fakes landed here.'],
+};
+const $ = id => document.getElementById(id);
+let current = null;
+
+function pct(p) { return Math.round(p * 1000) / 10; }
+
+function detRow(d, p) {
+  const sure = p >= 0.95 ? 'ai' : p <= 0.05 ? 'real' : null;
+  const color = sure === 'ai' ? 'var(--ai)' : sure === 'real' ? 'var(--real)' : 'var(--unsure)';
+  let reading, context;
+  if (sure === 'ai') { reading = `<b>${pct(p)}% likely AI</b>: sure enough to count`; context = `On viral images in our test, when it said AI this confidently it was right ${d.ai[0]} of ${d.ai[1]} times.`; }
+  else if (sure === 'real') { reading = `<b>${pct(1-p)}% likely real</b>: sure, but not trusted`; context = `On viral images in our test, when it said real this confidently it was right only ${d.real[0]} of ${d.real[1]} times, so a "real" answer isn't shown as a verdict.`; }
+  else { reading = `<b>${pct(p)}% likely AI</b>: not sure enough to count`; context = 'Between 5% and 95%, the test treats it as no answer.'; }
+  return `<div class="row"><div><h3>${d.name}</h3><div class="who"><a href="${d.href}">${d.who}</a></div><div class="who" style="margin-top:6px">${d.note}</div></div>
+    <div><div class="scale"><span class="dot" style="left:${(p*100).toFixed(1)}%;background:${color}"></span></div>
+    <div class="scale-key"><span>Real</span><span>AI</span></div>
+    <div class="reading">${reading}</div><div class="context">${context}</div></div></div>`;
+}
+
+function labelsHtml(m) {
+  if (m.meta_verdict === 'ai') return `<p class="found">Found: ${m.meta_reasons}</p><p class="none">This says the image was made or edited with AI. Labels can't be added by accident, but they can be stripped, so their absence proves nothing.</p>`;
+  if (m.meta_verdict === 'real') return `<p class="found">Found: ${m.meta_reasons}</p>`;
+  let extra = m.camera ? ` Camera details are present (${m.camera}), but those are easy to fake, so they don't count.` : '';
+  if (m.c2pa_present) extra += ` A signed label is present but isn't valid (${m.c2pa_validation || 'unreadable'}).`;
+  return `<p class="none">Nothing found. Most images shared online carry no label, because apps strip them on upload.${extra}</p>`;
+}
+
+function show(res, url) {
+  current = res;
+  $('preview').src = url; $('fname').textContent = res.filename;
+  const [label, why] = VERDICT[res.verdict];
+  $('pill').className = 'pill ' + res.verdict; $('pill').textContent = label;
+  $('why').textContent = res.verdict === 'confirmed_ai' ? `Proof found: ${res.meta.meta_reasons || 'Google\'s watermark'}.` : why;
+  $('labels').innerHTML = labelsHtml(res.meta);
+  $('gemini').innerHTML = `<p class="none">Only marks images made with Google's own AI tools. Checking sends this one image to Google through your Gemini account.</p><button class="g" id="gbtn">Check with Google</button>`;
+  $('gbtn').onclick = checkGemini;
+  $('best').innerHTML = detRow(DET[0], res.detectors[DET[0].k]);
+  $('others').innerHTML = DET.slice(1).map(d => detRow(d, res.detectors[d.k])).join('');
+  $('result').classList.add('show');
+}
+
+async function checkGemini() {
+  const b = $('gbtn'); b.disabled = true; b.textContent = 'Asking Google… (up to a minute)';
+  try {
+    const r = await fetch('/gemini', {method: 'POST', body: JSON.stringify({id: current.id})});
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error);
+    const msg = {found: '<p class="found">Found Google\'s watermark: made or edited with Google AI.</p>',
+                 not_found: '<p class="none">No Google watermark. That only rules out Google\'s tools, not AI in general.</p>',
+                 cannot_check: '<p class="none">Google couldn\'t run the check this time.</p>',
+                 quota: '<p class="none">Google\'s watermark check has reached its daily limit on your account. Try again tomorrow.</p>'}[j.synthid] || `<p class="none">Unclear reply from Gemini: ${j.reply.slice(0,200)}</p>`;
+    $('gemini').innerHTML = msg;
+    if (j.synthid === 'found') { current.verdict = 'confirmed_ai'; $('pill').className = 'pill confirmed_ai'; $('pill').textContent = VERDICT.confirmed_ai[0]; $('why').textContent = 'Proof found: Google\'s SynthID watermark.'; }
+  } catch (e) { $('gemini').innerHTML = `<p class="err">${e.message}</p>`; }
+}
+
+async function handle(file) {
+  if (!file) return;
+  $('err').textContent = ''; $('busy').classList.add('show'); $('result').classList.remove('show');
+  try {
+    const r = await fetch('/check', {method: 'POST', headers: {'X-Filename': encodeURIComponent(file.name)}, body: file});
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error);
+    show(j, URL.createObjectURL(file));
+    $('result').scrollIntoView({behavior: 'smooth'});
+  } catch (e) { $('err').textContent = e.message; }
+  $('busy').classList.remove('show');
+}
+
+const drop = $('drop');
+drop.onclick = () => $('file').click();
+drop.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('file').click(); } };
+$('file').onchange = e => { handle(e.target.files[0]); e.target.value = ''; };  // clear, so choosing the same file again still runs
+['dragenter','dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave','drop'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => handle(e.dataTransfer.files[0]));
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => { e.preventDefault(); if (!drop.contains(e.target)) handle(e.dataTransfer.files[0]); });
+</script>
+</body>
+</html>
